@@ -4,24 +4,32 @@ import scala.annotation.tailrec
 
 def solve(input: String): Unit =
     val nums = input.strip().split(" ").map(_.toLong).toList
-    println(part1(nums))
+    val s = Solver()
+    println(s.simulate(nums, 25))
+    println(s.simulate(nums, 75))
 
-@tailrec def part1(nums: List[Long], cnt: Int = 25): Long =
-    if cnt == 0 then
-        nums.size
-    else
-        part1(step(nums), cnt - 1)
+class Solver:
+    var dp: Map[(Long, Long), Long] = Map.empty
 
-@tailrec def step(nums: List[Long], acc: List[Long] = List.empty): List[Long] =
-    nums match
-        case head :: next => (if head == 0L then
-            step(next, 1 :: acc)
+    def simulate(nums: List[Long], numSteps: Long): Long =
+        nums.map(n => lookup((n, numSteps))).sum
+
+    def lookup(k: (Long, Long)): Long =
+        val (n, s) = k
+        if s == 0 then
+            1
         else
-            val numDigits = math.log10(head).toLong + 1L
-            if numDigits % 2L == 0L then
-                val m = math.pow(10, numDigits / 2).toLong
-                step(next, head % m :: head / m :: acc)
-            else
-                step(next, head * 2024 :: acc))
-        case Nil => acc.reverse
-    
+            if !dp.contains(k) then
+                if n == 0 then
+                    val res = lookup((1, s - 1))
+                    dp += (k, res)
+                else
+                    val numDigits = math.log10(n).toLong + 1L
+                    if numDigits % 2L == 0L then
+                        val m = math.pow(10, numDigits / 2).toLong
+                        val res = lookup((n % m, s - 1)) + lookup((n / m, s - 1))
+                        dp += (k, res)
+                    else
+                        val res = lookup(n * 2024, s - 1)
+                        dp += (k, res)
+            dp(k)
