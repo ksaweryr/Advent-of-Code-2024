@@ -1,8 +1,14 @@
 package solutions.Day14
 
+import java.awt.Color
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
+import java.io.File
+
 def solve(input: String): Unit =
     val robots = input.split("\n").map(parseRobot(_, (101, 103)))
     println(part1(robots))
+    part2(robots)
 
 def part1(robots: Array[Robot]): Int =
     robots
@@ -12,6 +18,37 @@ def part1(robots: Array[Robot]): Int =
         .values
         .map(_.length)
         .fold(1)(_ * _)
+
+def part2(robots: Array[Robot]): Unit =
+    Seq.unfold((0, robots))((step, robots) => {
+        val im = draw(robots, (210, 210))
+        val f = File(f"output/day14/step_${step}%04d.png")
+        f.mkdirs()
+        ImageIO.write(im, "png", f)
+        if step <= 9999 then
+            Some(((), (step + 1, robots.map(_.move(1)))))
+        else
+            None
+    })
+
+def draw(robots: Array[Robot], size: (Int, Int)): BufferedImage =
+    val im = BufferedImage(size._1, size._2, BufferedImage.TYPE_INT_RGB)
+    val g = im.createGraphics()
+    g.setBackground(Color.BLACK)
+    g.setPaint(Color.GREEN)
+
+    val cellSize = (size._1 / 101).min(size._2 / 103)
+    val drawnWidth = cellSize * 101
+    val drawnHeight = cellSize * 103
+    val offsetX = (size._1 - drawnWidth) / 2
+    val offsetY = (size._2 - drawnHeight) / 2
+
+    for r <- robots do
+        g.fillRect(offsetX + r.p._1 * cellSize, offsetY + r.p._2 * cellSize, cellSize, cellSize)
+    
+    g.dispose()
+
+    im
 
 def parseRobot(s: String, bounds: (Int, Int)): Robot =
     val parts = s.split(" ")
