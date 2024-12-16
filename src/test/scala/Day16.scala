@@ -6,3 +6,9 @@ class Day16 extends munit.FunSuite:
         val maze = input.split("\n").map(_.toArray)
         assertEquals(Day16.part1(maze), 7036)
     }
+
+    test("Part 2 example 1") {
+        val input = "###############\n#.......#....E#\n#.#.###.#.###.#\n#.....#.#...#.#\n#.###.#####.#.#\n#.#.#.......#.#\n#.#.#####.###.#\n#...........#.#\n###.#.#####.#.#\n#...#.....#.#.#\n#.#.#.###.#.#.#\n#.....#...#.#.#\n#.###.#.#.#.#.#\n#S..#.....#...#\n###############"
+        val maze = input.split("\n").map(_.toArray)
+        assertEquals(Day16.part2(maze), 45)
+    }

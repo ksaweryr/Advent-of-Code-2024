@@ -5,10 +5,36 @@ import scala.collection.mutable.PriorityQueue
 def solve(input: String): Unit =
     val maze = input.split("\n").map(_.toArray)
     println(part1(maze))
+    println(part2(maze))
 
 def part1(maze: Array[Array[Char]]): Int =
-    val startPos = Position(1, maze.length - 2, Direction.East)
-    val endPos = (maze(0).length - 2, 1)
+    dijkstra(maze, Position(1, maze.length - 2, Direction.East)).filterKeys(p => p.x == maze(0).length - 2 && p.y == 1).values.min
+
+def part2(maze: Array[Array[Char]]): Int =
+    val distancesFromStart = dijkstra(maze, Position(1, maze.length - 2, Direction.East))
+    val distancesFromEndE = dijkstra(maze, Position(maze(0).length - 2, 1, Direction.East))
+    val distancesFromEndW = dijkstra(maze, Position(maze(0).length - 2, 1, Direction.West))
+    val distancesFromEndN = dijkstra(maze, Position(maze(0).length - 2, 1, Direction.North))
+    val distancesFromEndS = dijkstra(maze, Position(maze(0).length - 2, 1, Direction.South))
+    val minScore = distancesFromStart.filterKeys(p => p.x == maze(0).length - 2 && p.y == 1).values.min
+
+    (for { y <- 0 to maze.length - 1; x <- 0 to maze(0).length - 1 }
+        yield
+            if maze(y)(x) != '#' then
+                (for { d <- Direction.values } yield
+                    val pos = Position(x, y, d)
+                    val invPos = Position(x, y, nextDirection(nextDirection(d)))
+                    distancesFromStart.getOrElse(pos, Int.MaxValue / 2) + Seq(
+                        distancesFromEndN.getOrElse(invPos, Int.MaxValue / 2),
+                        distancesFromEndS.getOrElse(invPos, Int.MaxValue / 2),
+                        distancesFromEndE.getOrElse(invPos, Int.MaxValue / 2),
+                        distancesFromEndW.getOrElse(invPos, Int.MaxValue / 2),
+                    ).min).min == minScore
+            else
+                false
+    ).count(p => p)
+
+def dijkstra(maze: Array[Array[Char]], startPos: Position): Map[Position, Int] =
     val ord = Ordering.by[(Position, Int), Int](-_._2)
     var pq = PriorityQueue.empty(ord)
     var distances = scala.collection.mutable.Map.empty[Position, Int]
@@ -21,10 +47,6 @@ def part1(maze: Array[Array[Char]]): Int =
 
         if !visited.contains(pos) then
             visited.add(pos)
-            if ((pos.x, pos.y)) == endPos then
-                return dist
-            end if
-
             val (nx, ny) = nextPosition(pos.x, pos.y, pos.dir)
             for { ngb <- Seq(
                     (Position(nx, ny, pos.dir), dist + 1),
@@ -38,7 +60,7 @@ def part1(maze: Array[Array[Char]]): Int =
         end if
     end while
 
-    -1
+    distances.toMap
 
 enum Direction:
     case North, South, East, West
