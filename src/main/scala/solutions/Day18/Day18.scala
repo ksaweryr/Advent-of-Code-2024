@@ -5,6 +5,7 @@ import scala.collection.mutable.PriorityQueue
 def solve(input: String): Unit =
     val locations = parseLocations(input)
     println(part1(locations))
+    println(part2(locations))
 
 def parseLocations(s: String): Array[(Int, Int)] =
     s.split("\n").map(l => {
@@ -12,8 +13,8 @@ def parseLocations(s: String): Array[(Int, Int)] =
         (a(0).toInt, a(1).toInt)
     })
 
-def part1(locations: Array[(Int, Int)], w: Int = 71, h: Int = 71): Int =
-    val corrupted = locations.take(1024).toSet
+def part1(locations: Array[(Int, Int)], toTake: Int = 1024, w: Int = 71, h: Int = 71): Int =
+    val corrupted = locations.take(toTake).toSet
     var distances = scala.collection.mutable.Map.empty[(Int, Int), Int]
     var visited = scala.collection.mutable.Set.empty[(Int, Int)]
     var pq = PriorityQueue.empty[((Int, Int), Int)](Ordering.by((p, d) => -d))
@@ -44,6 +45,13 @@ def part1(locations: Array[(Int, Int)], w: Int = 71, h: Int = 71): Int =
     end while
 
     -1
+
+def part2(locations: Array[(Int, Int)], from: Int = 1024, w: Int = 71, h: Int = 71): (Int, Int) =
+    (for i <- from + 1 to locations.length - 1 yield
+        (locations(i - 1), part1(locations, i, w, h) == -1))
+        .find(_._2)
+        .get
+        ._1
 
 def inBounds(x: Int, y: Int, w: Int, h: Int): Boolean =
     x >= 0 && x < w && y >= 0 && y < h
