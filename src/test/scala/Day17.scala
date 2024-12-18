@@ -12,7 +12,7 @@ class Day17 extends munit.FunSuite:
             val state = Day17.ProgramState(0, 0, 0, 9, List.empty)
             val program = Day17.parseProgram(Array(2,6))
             val result = Day17.runProgram(state, program)
-            assertEquals(result.rb, 1)
+            assertEquals(result.rb, 1L)
         }
 
         {
