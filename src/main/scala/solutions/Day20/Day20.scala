@@ -4,6 +4,7 @@ def solve(input: String): Unit =
     val maze = input.split("\n").map(_.toArray)
     val (start, end) = findStartAndEnd(maze)
     println(part1(maze, end))
+    println(part2(maze, end))
 
 def findStartAndEnd(maze: Array[Array[Char]]): ((Int, Int), (Int, Int)) =
     val indexed = maze.zipWithIndex.flatMap((row, y) => row.zipWithIndex.map((c, x) => (c, (x, y))))
@@ -14,6 +15,10 @@ def findStartAndEnd(maze: Array[Array[Char]]): ((Int, Int), (Int, Int)) =
 def part1(maze: Array[Array[Char]], end: (Int, Int)): Int =
     val distancesFromEnd = distancesFrom(maze, end)
     findCheats(maze, distancesFromEnd).size
+
+def part2(maze: Array[Array[Char]], end: (Int, Int), toSave: Int = 100): Int =
+    val distancesFromEnd = distancesFrom(maze, end)
+    findCheats2(maze, distancesFromEnd, toSave).size
 
 def distancesFrom(maze: Array[Array[Char]], start: (Int, Int)): Map[(Int, Int), Int] =
     val distances = scala.collection.mutable.Map.empty[(Int, Int), Int]
@@ -46,6 +51,18 @@ def findCheats(maze: Array[Array[Char]], distancesFromEnd: Map[(Int, Int), Int])
             (for (x0, y0) <- neighbours; (x1, y1) <- neighbours if {
                 distancesFromEnd.contains((x0, y0)) && distancesFromEnd.contains((x1, y1)) && distancesFromEnd((x1, y1)) - distancesFromEnd((x0, y0)) >= 101
             } yield ((x0, y0), (x1, y1))).toSet
+    ).flatten.toSet
+
+def findCheats2(maze: Array[Array[Char]], distancesFromEnd: Map[(Int, Int), Int], toSave: Int = 100): Set[((Int, Int), (Int, Int))] =
+    (for y <- 0 to maze.length - 1; x <- 0 to maze(0).length - 1 yield
+        if maze(y)(x) == '#' || !distancesFromEnd.contains((x, y)) then
+            Set.empty[((Int, Int), (Int, Int))]
+        else
+            (for dx <- -20 to 20; dy <- -20 to 20 if {
+                val (nx, ny) = (x + dx, y + dy)
+                val dist = dx.abs + dy.abs
+                dist <= 20 && inBounds(maze, (nx, ny)) && maze(ny)(nx) != '#' && distancesFromEnd.contains((nx, ny)) && distancesFromEnd((nx, ny)) - distancesFromEnd((x, y)) >= toSave + dist
+            } yield ((x, y), (x + dx, y + dy))).toSet
     ).flatten.toSet
 
 def inBounds(maze: Array[Array[Char]], pos: (Int, Int)): Boolean =
