@@ -1,12 +1,33 @@
 package solutions.Day22
 
 def solve(input: String): Unit =
-    val numbers = input.split("\n").map(_.toLong)
+    val numbers = input.split("\n").map(_.toInt)
     println(part1(numbers))
+    println(part2(numbers))
 
-def part1(numbers: Array[Long]): Long =
+def part1(numbers: Array[Int]): Long =
+    // kinda overengineered, I expected part 2 to be the same thing, but with taking like 2000000th number into account
     val m = transformationMatrix.pow(2000)
-    numbers.map(a => vectorToInt(m * intToVector(a.toInt, 24)).toLong).sum
+    numbers.map(a => vectorToInt(m * intToVector(a, 24)).toLong).sum
+
+def part2(numbers: Array[Int]): Long =
+    val maps = numbers.map(part2SingleNumber)
+    val keys = maps.map(_.keySet).flatten.toSet
+    keys.map(k => maps.map(_.getOrElse(k, 0).toLong).sum).max
+
+def part2SingleNumber(n: Int): Map[(Int, Int, Int, Int), Int] =
+    val numbers = Stream.unfold(n)(s => Some((s % 10, nextNumber(s)))).take(2001).toList
+    val differences = numbers.zip(numbers.tail).map((a, b) => (b - a)).toList
+    val differencesQuadruples = differences.sliding(4).map(a => (a(0), a(1), a(2), a(3))).toList
+    val numbersWithKeys = differencesQuadruples.zip(numbers.drop(4)).toList
+    numbersWithKeys.foldRight(Map.empty[(Int, Int, Int, Int), Int])((kv, m) => m.updated(kv._1, kv._2))
+
+def nextNumber(n: Int): Int =
+    val m = (1 << 24) - 1
+    val a = (n ^ (n << 6)) & m
+    val b = (a ^ (a >> 5)) & m
+    val c = (b ^ (b << 11)) & m
+    c
 
 case class GF2Matrix(val values: Vector[Vector[Int]]):
     def transpose(): GF2Matrix =
