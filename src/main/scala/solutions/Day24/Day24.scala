@@ -4,7 +4,12 @@ import scala.collection.{mutable => M}
 
 def solve(input: String): Unit =
     val circuit = parseInput(input)
+    println(getNumber(circuit, "x"))
+    println(getNumber(circuit, "y"))
     println(part1(circuit))
+    // $ dot -Tpng graph.dot > graph.png
+    // then, inspect manually to find mistakes in the ripple-carry adder
+    println(generateGraphviz(circuit))
 
 def parseInput(input: String): Map[String, Gate] =
     val a = input.split("\n\n")
@@ -30,8 +35,25 @@ def parseGates(s: String): Map[String, Gate] =
     }).toMap
 
 def part1(circuit: Map[String, Gate]): Long =
-    val mem = M.Map.empty[String, Boolean]
-    circuit.keys.filter(_.startsWith("z")).toList.sorted.map(evaluate(circuit, _, mem)).foldRight(0L)((b, acc) => (acc << 1) | (if b then 1L else 0L))
+    getNumber(circuit, "z")
+
+def getNumber(circuit: Map[String, Gate], s: String, mem: M.Map[String, Boolean] = M.Map.empty): Long =
+    circuit.keys.filter(_.startsWith(s)).toList.sorted.map(evaluate(circuit, _, mem)).foldRight(0L)((b, acc) => (acc << 1) | (if b then 1L else 0L))
+
+def generateGraphviz(circuit: Map[String, Gate]): String =
+    val nodes = circuit.map((k, v) => v match
+        case AndGate(a, b) => s"${k} [shape = circle];"
+        case OrGate(a, b) => s"${k} [shape = triangle];"
+        case XorGate(a, b) => s"${k} [shape = diamond];"
+        case Input(active) => s"${k} [shape = point];"
+    )
+    val connections = circuit.map((k, v) => v match
+        case AndGate(a, b) => s"${a} -> ${k};\n${b} -> ${k};"
+        case OrGate(a, b) => s"${a} -> ${k};\n${b} -> ${k};"
+        case XorGate(a, b) => s"${a} -> ${k};\n${b} -> ${k};"
+        case Input(active) => ""
+    )
+    "digraph{\n" + nodes.mkString("\n") + "\n" + connections.mkString("\n") + "\n}"
 
 def evaluate(circuit: Map[String, Gate], wire: String, mem: M.Map[String, Boolean] = M.Map.empty): Boolean =
     if !mem.contains(wire) then
